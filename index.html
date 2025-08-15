@@ -1,13 +1,31 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Pickerl-Sammler - Deine magische Sammlung</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#218085">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#218085" />
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      // Supabase Konfiguration
+      const SUPABASE_URL = 'https://lekplvtnvrswmrrnyrvt.supabase.co';
+      const SUPABASE_ANON_KEY = 'sb_publishable_LZ0huP0FuMn7DG_aWQ_sw_psc5oEBj';
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // Beispiel: Einen User speichern
+      async function addTestUser() {
+        const { data, error } = await supabase
+          .from('users')
+          .insert([{ name: 'Max Mustermann', avatar: '🦁', level: 1, xp: 0 }]);
+        if (error) console.error('Fehler:', error.message);
+        else console.log('Erfolg:', data);
+      }
+    </script>
 </head>
+
 <body>
     <!-- Onboarding Modal -->
     <div id="onboardingModal" class="modal">
