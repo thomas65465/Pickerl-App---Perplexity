@@ -163,7 +163,7 @@
                         <button class="filter-btn active" data-filter="all">Alle</button>
                         <button class="filter-btn" data-filter="collected">Gesammelt</button>
                         <button class="filter-btn" data-filter="missing">Fehlend</button>
-                        <button class="filter-btn" data-filter="duplicates">Doppelt</button>
+                        <button class="filter-btn" data-filter="duplicates">Doppelte</button>
                     </div>
                     <div class="search-box">
                         <input type="text" id="stickerSearch" placeholder="Nummer suchen..." class="form-control">
@@ -212,6 +212,81 @@
                     <h3>Empfohlene Tausche 🔄</h3>
                     <div class="suggestions-grid">
                         <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="settingsView" class="view">
+                <div class="view-header">
+                    <button id="backToDashboardFromSettings" class="btn btn--outline">← Zurück</button>
+                    <h2>Einstellungen</h2>
+                </div>
+
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h3>Profil</h3>
+                        <div class="setting-item">
+                            <label class="form-label">Avatar wählen:</label>
+                            <div class="avatar-selector" id="avatarSelector">
+                                <div class="avatar-option" data-avatar="🦊">🦊</div>
+                                <div class="avatar-option" data-avatar="🐻">🐻</div>
+                                <div class="avatar-option" data-avatar="🦁">🦁</div>
+                                <div class="avatar-option" data-avatar="🐨">🐨</div>
+                                <div class="avatar-option" data-avatar="🐼">🐼</div>
+                                <div class="avatar-option" data-avatar="🦝">🦝</div>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label for="settingsName" class="form-label">Name ändern:</label>
+                            <input type="text" id="settingsName" class="form-control" maxlength="20">
+                        </div>
+                        <button id="saveProfileBtn" class="btn btn--primary">Profil speichern</button>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>App-Einstellungen</h3>
+                        <div class="setting-item">
+                            <label class="setting-toggle">
+                                <input type="checkbox" id="soundToggle">
+                                <span class="toggle-slider"></span>
+                                Sound-Effekte
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-toggle">
+                                <input type="checkbox" id="notificationToggle">
+                                <span class="toggle-slider"></span>
+                                Benachrichtigungen
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label for="themeSelect" class="form-label">Design:</label>
+                            <select id="themeSelect" class="form-control">
+                                <option value="auto">Automatisch</option>
+                                <option value="light">Hell</option>
+                                <option value="dark">Dunkel</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Backend-Features</h3>
+                        <div class="placeholder-section">
+                            <p>🚀 <strong>Bald verfügbar:</strong></p>
+                            <ul>
+                                <li>Online-Synchronisation</li>
+                                <li>Cloud-Speicher für Sammlungen</li>
+                                <li>Erweiterte Tausch-Features</li>
+                                <li>Community-Funktionen</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Daten</h3>
+                        <button id="resetDataBtn" class="btn btn--outline">🗑️ Alle Daten löschen</button>
+                        <p class="text-warning">⚠️ Diese Aktion kann nicht rückgängig gemacht werden!</p>
                     </div>
                 </div>
             </section>
@@ -265,8 +340,62 @@
             <div class="achievement-icon" id="achievementIcon">🏆</div>
             <h3 id="achievementName">Achievement</h3>
             <p id="achievementDescription">Beschreibung</p>
-            <button class="btn btn--primary" onclick="shareAchievement()">📱 Erfolg teilen</button>
-            <button class="modal-close btn btn--outline">Weiter sammeln!</button>
+            <button class="btn btn--primary" onclick="shareAchievement()">📱 Mit Freunden teilen</button>
+            <button class="modal-close btn btn--outline">Zum Album</button>
+        </div>
+    </div>
+
+    <!-- Friend Profile Modal -->
+    <div id="friendProfileModal" class="modal hidden">
+        <div class="modal-content friend-profile">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profileAvatar">👤</div>
+                <div class="profile-info">
+                    <h3 id="profileName">Freund</h3>
+                    <div class="profile-stats">
+                        <span class="level-badge">Level <span id="profileLevel">1</span></span>
+                        <span class="xp-badge"><span id="profileXP">0</span> XP</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-achievements">
+                <h4>Achievements</h4>
+                <div id="profileAchievements" class="achievements-mini">
+                    <!-- Will be populated -->
+                </div>
+            </div>
+            
+            <div class="profile-collections">
+                <h4>Sammlungen</h4>
+                <div id="profileCollections" class="collections-mini">
+                    <!-- Will be populated -->
+                </div>
+            </div>
+            
+            <div class="profile-tradables">
+                <h4>Tauschbare Pickerl</h4>
+                <div id="profileTradables" class="tradables-list">
+                    <!-- Will be populated -->
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <button class="btn btn--primary" onclick="app.proposeTrade(app.currentFriendProfile)">🔄 Tausch vorschlagen</button>
+                <button class="modal-close btn btn--outline">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="confirmTitle">Bestätigung</h3>
+            <p id="confirmMessage">Bist du sicher?</p>
+            <div class="modal-actions">
+                <button id="confirmYes" class="btn btn--primary">Ja</button>
+                <button id="confirmNo" class="btn btn--outline modal-close">Abbrechen</button>
+            </div>
         </div>
     </div>
 

@@ -1,4 +1,4 @@
-// Pickerl-Sammler App - JavaScript
+// Pickerl-Sammler App - JavaScript mit Bug-Fixes
 class PickerlSammlerApp {
     constructor() {
         this.data = {
@@ -26,17 +26,66 @@ class PickerlSammlerApp {
                         {"name": "Länder", "count": 60},
                         {"name": "Kulturen", "count": 60}
                     ]
+                }
+            ],
+            friends: [
+                {
+                    "id": "friend-1",
+                    "name": "Anna",
+                    "avatar": "🦸‍♀️", 
+                    "level": 12,
+                    "xp": 2450,
+                    "collections": [
+                        {
+                            "id": "billa-wald-2024",
+                            "progress": 85,
+                            "collected": 153,
+                            "doubles": [12, 25, 34, 67, 89, 102]
+                        }
+                    ],
+                    "achievements": ["Erste Sammlung", "Fleißiger Sammler", "Tausch-Profi"],
+                    "tradableStickers": [
+                        {"collectionId": "billa-wald-2024", "stickerNumber": 12, "quantity": 3},
+                        {"collectionId": "billa-wald-2024", "stickerNumber": 25, "quantity": 2}
+                    ]
                 },
                 {
-                    "id": "panini-fussball-2024",
-                    "name": "Panini Fußball EM 2024",
-                    "totalStickers": 728,
-                    "description": "Alle Spieler der Europameisterschaft",
-                    "theme": "football",
-                    "categories": [
-                        {"name": "Österreich", "count": 25},
-                        {"name": "Deutschland", "count": 25},
-                        {"name": "Andere Teams", "count": 678}
+                    "id": "friend-2", 
+                    "name": "Max",
+                    "avatar": "🐻",
+                    "level": 8,
+                    "xp": 1200,
+                    "collections": [
+                        {
+                            "id": "spar-oskar-bo-2024",
+                            "progress": 60,
+                            "collected": 120,
+                            "doubles": [5, 18, 33, 45]
+                        }
+                    ],
+                    "achievements": ["Erste Sammlung", "Freunde-Finder"],
+                    "tradableStickers": [
+                        {"collectionId": "spar-oskar-bo-2024", "stickerNumber": 5, "quantity": 2}
+                    ]
+                },
+                {
+                    "id": "friend-3",
+                    "name": "Emma", 
+                    "avatar": "🐨",
+                    "level": 15,
+                    "xp": 4200,
+                    "collections": [
+                        {
+                            "id": "billa-wald-2024", 
+                            "progress": 95,
+                            "collected": 171,
+                            "doubles": [8, 15, 29, 42, 56, 71, 88, 94, 103, 125]
+                        }
+                    ],
+                    "achievements": ["Erste Sammlung", "Fleißiger Sammler", "Tausch-Profi", "Social Star"],
+                    "tradableStickers": [
+                        {"collectionId": "billa-wald-2024", "stickerNumber": 42, "quantity": 4},
+                        {"collectionId": "billa-wald-2024", "stickerNumber": 71, "quantity": 3}
                     ]
                 }
             ],
@@ -48,11 +97,6 @@ class PickerlSammlerApp {
                 {"name": "Freunde-Finder", "description": "3 Freunde hinzugefügt", "icon": "👥"},
                 {"name": "Social Star", "description": "10x auf WhatsApp geteilt", "icon": "📱"}
             ],
-            friends: [
-                {"name": "Anna", "level": 12, "collections": 2, "tradableStickers": 45, "avatar": "🐻"},
-                {"name": "Max", "level": 8, "collections": 1, "tradableStickers": 23, "avatar": "🦁"},
-                {"name": "Emma", "level": 15, "collections": 3, "tradableStickers": 67, "avatar": "🐨"}
-            ],
             gamificationLevels: [
                 {"level": 1, "title": "Pickerl-Anfänger", "requiredXP": 0, "rewards": ["Willkommensbonus"]},
                 {"level": 5, "title": "Sammler", "requiredXP": 500, "rewards": ["Neue Frames"]},
@@ -63,19 +107,23 @@ class PickerlSammlerApp {
         };
 
         this.user = this.loadUserData();
+        this.settings = this.loadSettings();
         this.currentView = 'dashboard';
         this.currentCollection = null;
+        this.currentFriendProfile = null;
         this.filterMode = 'all';
+        this.maxStickerCount = 10;
+        this.pendingConfirmAction = null;
     }
 
     init() {
-        console.log('Initializing app...');
+        console.log('Initializing app with bug fixes...');
+        this.applyTheme();
         this.setupEventListeners();
         
-        // Check onboarding after a short delay to ensure DOM is ready
         setTimeout(() => {
             this.checkOnboarding();
-        }, 50);
+        }, 100);
     }
 
     loadUserData() {
@@ -103,12 +151,48 @@ class PickerlSammlerApp {
         };
     }
 
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('pickerl-sammler-settings');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch (e) {
+            console.log('Failed to load settings:', e);
+        }
+        
+        return {
+            notifications: true,
+            soundEffects: true,
+            theme: 'auto'
+        };
+    }
+
     saveUserData() {
         try {
             localStorage.setItem('pickerl-sammler-user', JSON.stringify(this.user));
             console.log('User data saved');
         } catch (e) {
             console.log('Failed to save user data:', e);
+        }
+    }
+
+    saveSettings() {
+        try {
+            localStorage.setItem('pickerl-sammler-settings', JSON.stringify(this.settings));
+            console.log('Settings saved');
+        } catch (e) {
+            console.log('Failed to save settings:', e);
+        }
+    }
+
+    applyTheme() {
+        if (this.settings.theme === 'light') {
+            document.documentElement.setAttribute('data-color-scheme', 'light');
+        } else if (this.settings.theme === 'dark') {
+            document.documentElement.setAttribute('data-color-scheme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-color-scheme');
         }
     }
 
@@ -142,9 +226,21 @@ class PickerlSammlerApp {
     setupEventListeners() {
         console.log('Setting up event listeners...');
 
-        // Onboarding
+        // Onboarding events
+        this.setupOnboardingListeners();
+        
+        // Main app events
+        this.setupNavigationListeners();
+        this.setupMainAppListeners();
+        
+        // Modal events
+        this.setupModalListeners();
+    }
+
+    setupOnboardingListeners() {
         document.querySelectorAll('.avatar-option').forEach(option => {
-            option.addEventListener('click', () => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
                 document.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
             });
@@ -152,7 +248,8 @@ class PickerlSammlerApp {
 
         const startButton = document.getElementById('startAdventure');
         if (startButton) {
-            startButton.addEventListener('click', () => {
+            startButton.addEventListener('click', (e) => {
+                e.preventDefault();
                 console.log('Start adventure clicked');
                 const nameInput = document.getElementById('playerName');
                 const selectedAvatar = document.querySelector('.avatar-option.selected');
@@ -169,109 +266,103 @@ class PickerlSammlerApp {
                 }
             });
         }
+    }
 
-        // Navigation - Bottom nav
+    setupNavigationListeners() {
+        // Bottom navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const view = item.dataset.view;
-                console.log('Nav clicked:', view);
+                console.log('Bottom nav clicked:', view);
                 this.switchView(view);
             });
         });
 
-        // Quick action buttons - use delegation for better reliability
-        document.addEventListener('click', (e) => {
-            const target = e.target;
-            
-            // New Collection Button
-            if (target.id === 'newCollectionBtn') {
+        // Header buttons
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Settings button clicked');
+                this.switchView('settings');
+            });
+        }
+
+        const friendsBtn = document.getElementById('friendsBtn');
+        if (friendsBtn) {
+            friendsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Friends header button clicked');
+                this.switchView('friends');
+            });
+        }
+    }
+
+    setupMainAppListeners() {
+        // Quick action buttons - Direct event listeners
+        const newCollectionBtn = document.getElementById('newCollectionBtn');
+        if (newCollectionBtn) {
+            newCollectionBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log('New collection button clicked');
                 this.switchView('collections');
-                return;
-            }
-            
-            // Trade Center Button
-            if (target.id === 'tradeCenterBtn') {
+            });
+        }
+
+        const tradeCenterBtn = document.getElementById('tradeCenterBtn');
+        if (tradeCenterBtn) {
+            tradeCenterBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log('Trade center button clicked');
                 this.switchView('tradeCenter');
-                return;
-            }
-            
-            // Friends Button (header)
-            if (target.id === 'friendsBtn') {
-                e.preventDefault();
-                console.log('Friends button clicked');
-                this.switchView('friends');
-                return;
-            }
+            });
+        }
 
-            // Back buttons
-            if (target.id === 'backToDashboard' || target.id === 'backToDashboardFromFriends' || target.id === 'backToDashboardFromTrade') {
+        // Back buttons
+        const backToDashboard = document.getElementById('backToDashboard');
+        if (backToDashboard) {
+            backToDashboard.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.switchView('dashboard');
-                return;
-            }
+            });
+        }
 
-            if (target.id === 'backToCollections') {
+        const backToDashboardFromFriends = document.getElementById('backToDashboardFromFriends');
+        if (backToDashboardFromFriends) {
+            backToDashboardFromFriends.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.switchView('dashboard');
+            });
+        }
+
+        const backToDashboardFromTrade = document.getElementById('backToDashboardFromTrade');
+        if (backToDashboardFromTrade) {
+            backToDashboardFromTrade.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.switchView('dashboard');
+            });
+        }
+
+        const backToDashboardFromSettings = document.getElementById('backToDashboardFromSettings');
+        if (backToDashboardFromSettings) {
+            backToDashboardFromSettings.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.switchView('dashboard');
+            });
+        }
+
+        const backToCollections = document.getElementById('backToCollections');
+        if (backToCollections) {
+            backToCollections.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.switchView('collections');
-                return;
-            }
+            });
+        }
 
-            // Share collection button
-            if (target.id === 'shareCollectionBtn') {
-                e.preventDefault();
-                this.shareProgress();
-                return;
-            }
-
-            // Invite friend button
-            if (target.id === 'inviteFriendBtn') {
-                e.preventDefault();
-                this.showInviteModal();
-                return;
-            }
-
-            // Bulk mode buttons
-            if (target.id === 'bulkModeBtn') {
-                e.preventDefault();
-                const panel = document.getElementById('bulkModePanel');
-                if (panel) panel.classList.toggle('hidden');
-                return;
-            }
-
-            if (target.id === 'cancelBulk') {
-                e.preventDefault();
-                const panel = document.getElementById('bulkModePanel');
-                const input = document.getElementById('bulkInput');
-                if (panel) panel.classList.add('hidden');
-                if (input) input.value = '';
-                return;
-            }
-
-            if (target.id === 'addBulkStickers') {
-                e.preventDefault();
-                this.addBulkStickers();
-                return;
-            }
-
-            // Filter buttons
-            if (target.classList.contains('filter-btn')) {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                target.classList.add('active');
-                this.filterMode = target.dataset.filter;
-                this.renderStickers();
-                return;
-            }
-
-            // Modal close buttons
-            if (target.classList.contains('modal-close')) {
-                target.closest('.modal').classList.add('hidden');
-                return;
-            }
+        // Global click handler for dynamic content
+        document.addEventListener('click', (e) => {
+            this.handleDynamicClicks(e);
         });
 
         // Search functionality
@@ -281,7 +372,9 @@ class PickerlSammlerApp {
                 this.searchStickers(e.target.value);
             });
         }
+    }
 
+    setupModalListeners() {
         // Click outside modal to close
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
@@ -290,12 +383,163 @@ class PickerlSammlerApp {
                 }
             });
         });
+
+        // Modal close buttons
+        document.querySelectorAll('.modal-close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', (e) => {
+                e.target.closest('.modal').classList.add('hidden');
+            });
+        });
+    }
+
+    handleDynamicClicks(e) {
+        const target = e.target;
+
+        // Counter buttons
+        if (target.classList.contains('counter-btn-plus')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const stickerNumber = parseInt(target.dataset.sticker);
+            this.increaseSticker(stickerNumber);
+            return;
+        }
+
+        if (target.classList.contains('counter-btn-minus')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const stickerNumber = parseInt(target.dataset.sticker);
+            this.decreaseSticker(stickerNumber);
+            return;
+        }
+
+        // Filter buttons
+        if (target.classList.contains('filter-btn')) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            target.classList.add('active');
+            this.filterMode = target.dataset.filter;
+            this.renderStickers();
+            return;
+        }
+
+        // Sticker items
+        if (target.classList.contains('sticker-item') && !target.querySelector('.counter-btn')) {
+            const stickerNumber = parseInt(target.textContent.trim().split(' ')[0]);
+            if (stickerNumber) {
+                this.toggleSticker(stickerNumber);
+            }
+            return;
+        }
+
+        // Friend cards
+        if (target.closest('.friend-card')) {
+            const friendCard = target.closest('.friend-card');
+            const friendName = friendCard.dataset.friend;
+            if (friendName && !target.closest('.friend-actions')) {
+                this.viewFriendProfile(friendName);
+            }
+            return;
+        }
+
+        // Settings-related clicks
+        this.handleSettingsClicks(target);
+
+        // Other buttons
+        this.handleOtherButtonClicks(target);
+    }
+
+    handleSettingsClicks(target) {
+        if (target.id === 'saveProfileBtn') {
+            this.saveProfileSettings();
+            return;
+        }
+
+        if (target.id === 'resetDataBtn') {
+            this.showConfirmation('Alle Daten löschen?', 
+                'Diese Aktion löscht alle deine Sammlungen, Fortschritte und Einstellungen unwiderruflich.', 
+                () => this.resetAllData());
+            return;
+        }
+
+        if (target.id === 'soundToggle') {
+            this.settings.soundEffects = target.checked;
+            this.saveSettings();
+            return;
+        }
+
+        if (target.id === 'notificationToggle') {
+            this.settings.notifications = target.checked;
+            this.saveSettings();
+            return;
+        }
+
+        if (target.id === 'themeSelect') {
+            this.settings.theme = target.value;
+            this.saveSettings();
+            this.applyTheme();
+            return;
+        }
+
+        // Avatar selection in settings
+        if (target.closest('#avatarSelector') && target.classList.contains('avatar-option')) {
+            document.querySelectorAll('#avatarSelector .avatar-option').forEach(o => o.classList.remove('selected'));
+            target.classList.add('selected');
+            return;
+        }
+    }
+
+    handleOtherButtonClicks(target) {
+        const buttonActions = {
+            'shareCollectionBtn': () => this.shareProgress(),
+            'inviteFriendBtn': () => this.showInviteModal(),
+            'bulkModeBtn': () => {
+                const panel = document.getElementById('bulkModePanel');
+                if (panel) panel.classList.toggle('hidden');
+            },
+            'cancelBulk': () => {
+                const panel = document.getElementById('bulkModePanel');
+                const input = document.getElementById('bulkInput');
+                if (panel) panel.classList.add('hidden');
+                if (input) input.value = '';
+            },
+            'addBulkStickers': () => this.addBulkStickers(),
+            'confirmYes': () => {
+                if (this.pendingConfirmAction) {
+                    this.pendingConfirmAction();
+                    this.pendingConfirmAction = null;
+                }
+                document.getElementById('confirmationModal')?.classList.add('hidden');
+            },
+            'confirmNo': () => {
+                this.pendingConfirmAction = null;
+                document.getElementById('confirmationModal')?.classList.add('hidden');
+            }
+        };
+
+        if (buttonActions[target.id]) {
+            buttonActions[target.id]();
+        }
+
+        // Trade buttons
+        if (target.textContent.includes('Tausch vorschlagen') || target.textContent.includes('Tauschen')) {
+            const friendName = target.dataset.friend || target.closest('[data-friend]')?.dataset.friend;
+            if (friendName) {
+                this.proposeTrade(friendName);
+            }
+        }
+
+        // View profile buttons
+        if (target.textContent.includes('Profil')) {
+            const friendName = target.dataset.friend || target.closest('[data-friend]')?.dataset.friend;
+            if (friendName) {
+                this.viewFriendProfile(friendName);
+            }
+        }
     }
 
     switchView(viewName) {
         console.log('Switching to view:', viewName);
         
-        // Update nav
+        // Update bottom nav active state
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
             if (item.dataset.view === viewName) {
@@ -303,33 +547,53 @@ class PickerlSammlerApp {
             }
         });
 
-        // Update views
+        // Hide all views
         document.querySelectorAll('.view').forEach(view => {
             view.classList.remove('active');
         });
         
+        // Show target view
         const targetView = document.getElementById(viewName + 'View');
         if (targetView) {
             targetView.classList.add('active');
             console.log('View activated:', viewName);
         } else {
             console.error('View not found:', viewName + 'View');
+            return;
         }
         
         this.currentView = viewName;
 
-        // Load view-specific content
+        // Load view-specific content with a small delay to ensure DOM is ready
         setTimeout(() => {
-            if (viewName === 'collections') {
+            this.loadViewContent(viewName);
+        }, 50);
+    }
+
+    loadViewContent(viewName) {
+        switch(viewName) {
+            case 'collections':
                 this.renderCollections();
-            } else if (viewName === 'friends') {
+                break;
+            case 'friends':
                 this.renderFriends();
-            } else if (viewName === 'tradeCenter') {
+                break;
+            case 'tradeCenter':
                 this.renderTradeSuggestions();
-            } else if (viewName === 'dashboard') {
+                break;
+            case 'dashboard':
                 this.renderDashboard();
-            }
-        }, 10);
+                break;
+            case 'settings':
+                this.renderSettings();
+                break;
+            case 'collectionDetail':
+                if (this.currentCollection) {
+                    this.updateCollectionProgress();
+                    this.renderStickers();
+                }
+                break;
+        }
     }
 
     updateUI() {
@@ -375,7 +639,7 @@ class PickerlSammlerApp {
 
     updateStats() {
         const totalStickers = Object.values(this.user.collections).reduce((sum, collection) => {
-            return sum + Object.keys(collection.collected || {}).length;
+            return sum + Object.values(collection.collected || {}).reduce((collSum, count) => collSum + count, 0);
         }, 0);
 
         const totalStickersEl = document.getElementById('totalStickers');
@@ -415,16 +679,16 @@ class PickerlSammlerApp {
             if (!collection) return '';
             
             const userCollection = this.user.collections[collectionId];
-            const collected = Object.keys(userCollection.collected || {}).length;
-            const progress = (collected / collection.totalStickers) * 100;
+            const collectedCount = Object.keys(userCollection.collected || {}).length;
+            const progress = (collectedCount / collection.totalStickers) * 100;
 
             return `
-                <div class="collection-card" onclick="app.openCollection('${collectionId}')">
+                <div class="collection-card" data-collection="${collectionId}" style="cursor: pointer;">
                     <div class="collection-header">
                         <h4 class="collection-title">${collection.name}</h4>
                         <p class="collection-description">${collection.description}</p>
                         <div class="collection-stats">
-                            <span>${collected}/${collection.totalStickers} Pickerl</span>
+                            <span>${collectedCount}/${collection.totalStickers} Pickerl</span>
                             <span>${Math.round(progress)}%</span>
                         </div>
                     </div>
@@ -437,6 +701,14 @@ class PickerlSammlerApp {
                 </div>
             `;
         }).join('');
+
+        // Add click listeners to collection cards
+        container.querySelectorAll('.collection-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const collectionId = card.dataset.collection;
+                this.openCollection(collectionId);
+            });
+        });
     }
 
     renderRecentAchievements() {
@@ -478,11 +750,11 @@ class PickerlSammlerApp {
         container.innerHTML = this.data.sampleCollections.map(collection => {
             const userCollection = this.user.collections[collection.id];
             const isStarted = !!userCollection;
-            const collected = isStarted ? Object.keys(userCollection.collected || {}).length : 0;
-            const progress = (collected / collection.totalStickers) * 100;
+            const collectedCount = isStarted ? Object.keys(userCollection.collected || {}).length : 0;
+            const progress = (collectedCount / collection.totalStickers) * 100;
 
             return `
-                <div class="collection-card" onclick="app.${isStarted ? 'openCollection' : 'startCollection'}('${collection.id}')">
+                <div class="collection-card" data-collection="${collection.id}" data-started="${isStarted}" style="cursor: pointer;">
                     <div class="collection-header">
                         <h4 class="collection-title">${collection.name}</h4>
                         <p class="collection-description">${collection.description}</p>
@@ -496,7 +768,7 @@ class PickerlSammlerApp {
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: ${progress}%"></div>
                             </div>
-                            <div class="progress-text">${collected}/${collection.totalStickers} (${Math.round(progress)}%)</div>
+                            <div class="progress-text">${collectedCount}/${collection.totalStickers} (${Math.round(progress)}%)</div>
                         </div>
                     ` : `
                         <div class="collection-progress-card">
@@ -506,6 +778,20 @@ class PickerlSammlerApp {
                 </div>
             `;
         }).join('');
+
+        // Add click listeners
+        container.querySelectorAll('.collection-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const collectionId = card.dataset.collection;
+                const isStarted = card.dataset.started === 'true';
+                
+                if (isStarted) {
+                    this.openCollection(collectionId);
+                } else {
+                    this.startCollection(collectionId);
+                }
+            });
+        });
     }
 
     startCollection(collectionId) {
@@ -542,14 +828,14 @@ class PickerlSammlerApp {
     updateCollectionProgress() {
         const collection = this.data.sampleCollections.find(c => c.id === this.currentCollection);
         const userCollection = this.user.collections[this.currentCollection];
-        const collected = Object.keys(userCollection?.collected || {}).length;
-        const progress = (collected / collection.totalStickers) * 100;
+        const collectedCount = Object.keys(userCollection?.collected || {}).length;
+        const progress = (collectedCount / collection.totalStickers) * 100;
 
         const progressText = document.getElementById('progressText');
         const collectionProgress = document.getElementById('collectionProgress');
 
         if (progressText) {
-            progressText.textContent = `${collected} / ${collection.totalStickers} (${Math.round(progress)}%)`;
+            progressText.textContent = `${collectedCount} / ${collection.totalStickers} (${Math.round(progress)}%)`;
         }
         if (collectionProgress) {
             collectionProgress.style.width = progress + '%';
@@ -569,15 +855,19 @@ class PickerlSammlerApp {
             const count = userCollection.collected[i] || 0;
             
             let status = 'missing';
-            if (count === 1) status = 'collected';
-            if (count > 1) status = 'duplicate';
+            if (count >= 1) status = 'collected';
+            if (count >= 2) status = 'duplicate';
             
             stickers.push({ number: i, status, count });
         }
 
-        // Apply filters
-        if (this.filterMode !== 'all') {
-            stickers = stickers.filter(sticker => sticker.status === this.filterMode);
+        // Apply filters - FIXED: gesammelt shows all collected including duplicates
+        if (this.filterMode === 'collected') {
+            stickers = stickers.filter(sticker => sticker.count >= 1);
+        } else if (this.filterMode === 'missing') {
+            stickers = stickers.filter(sticker => sticker.count === 0);
+        } else if (this.filterMode === 'duplicates') {
+            stickers = stickers.filter(sticker => sticker.count >= 2);
         }
 
         // Apply search
@@ -590,34 +880,66 @@ class PickerlSammlerApp {
         }
 
         container.innerHTML = stickers.map(sticker => `
-            <div class="sticker-item ${sticker.status}" onclick="app.toggleSticker(${sticker.number})">
+            <div class="sticker-item ${sticker.status}" data-sticker="${sticker.number}" tabindex="0">
                 ${sticker.number}
+                ${sticker.count >= 2 ? `<span class="sticker-counter">+${sticker.count}</span>` : ''}
+                ${sticker.count >= 1 ? `
+                    <div class="sticker-controls">
+                        <button class="counter-btn counter-btn-minus" data-sticker="${sticker.number}">−</button>
+                        <button class="counter-btn counter-btn-plus" data-sticker="${sticker.number}">+</button>
+                    </div>
+                ` : ''}
             </div>
         `).join('');
     }
 
     toggleSticker(number) {
-        console.log('Toggling sticker:', number);
+        this.increaseSticker(number);
+    }
+
+    increaseSticker(number) {
+        console.log('Increasing sticker:', number);
         if (!this.currentCollection) return;
 
         const userCollection = this.user.collections[this.currentCollection];
         if (!userCollection.collected) userCollection.collected = {};
 
         const currentCount = userCollection.collected[number] || 0;
-        const newCount = currentCount + 1;
+        const newCount = Math.min(currentCount + 1, this.maxStickerCount);
 
-        if (newCount > 3) {
-            delete userCollection.collected[number];
-        } else {
+        if (newCount !== currentCount) {
             userCollection.collected[number] = newCount;
-        }
 
-        if (newCount === 1) {
-            this.addXP(10);
-            this.checkCollectionProgress();
-            this.showToast(`Pickerl ${number} gesammelt! +10 XP`);
-        } else if (newCount === 2) {
-            this.showToast(`Pickerl ${number} ist jetzt doppelt!`);
+            if (newCount === 1) {
+                this.addXP(10);
+                this.checkCollectionProgress();
+                this.showToast(`Pickerl ${number} gesammelt! +10 XP`);
+            } else {
+                this.showToast(`Pickerl ${number} jetzt ${newCount}x vorhanden!`);
+            }
+
+            this.saveUserData();
+            this.updateCollectionProgress();
+            this.renderStickers();
+            this.updateStats();
+        }
+    }
+
+    decreaseSticker(number) {
+        console.log('Decreasing sticker:', number);
+        if (!this.currentCollection) return;
+
+        const userCollection = this.user.collections[this.currentCollection];
+        if (!userCollection.collected) return;
+
+        const currentCount = userCollection.collected[number] || 0;
+        
+        if (currentCount > 1) {
+            userCollection.collected[number] = currentCount - 1;
+            this.showToast(`Pickerl ${number} reduziert auf ${currentCount - 1}x`);
+        } else if (currentCount === 1) {
+            delete userCollection.collected[number];
+            this.showToast(`Pickerl ${number} entfernt`);
         }
 
         this.saveUserData();
@@ -627,7 +949,7 @@ class PickerlSammlerApp {
     }
 
     renderFriends() {
-        console.log('Rendering friends');
+        console.log('Rendering friends with full profiles');
         const container = document.getElementById('friendsList');
         if (!container) return;
 
@@ -645,21 +967,21 @@ class PickerlSammlerApp {
         }
 
         container.innerHTML = allFriends.map(friend => `
-            <div class="friend-card">
+            <div class="friend-card" data-friend="${friend.name}" style="cursor: pointer;">
                 <div class="friend-info">
                     <div class="friend-avatar">${friend.avatar || '👤'}</div>
                     <div class="friend-details">
                         <h4>${friend.name}</h4>
                         <div class="friend-stats">
-                            Level ${friend.level} • ${friend.collections} Sammlungen • ${friend.tradableStickers} tauschbare Pickerl
+                            Level ${friend.level} • ${friend.xp} XP • ${friend.collections.length} Sammlung${friend.collections.length !== 1 ? 'en' : ''} • ${friend.tradableStickers.length} tauschbare Pickerl
                         </div>
                     </div>
                 </div>
                 <div class="friend-actions">
-                    <button class="btn btn--outline btn--sm" onclick="app.proposeTrade('${friend.name}')">
+                    <button class="btn btn--outline btn--sm" data-friend="${friend.name}">
                         🔄 Tauschen
                     </button>
-                    <button class="btn btn--secondary btn--sm" onclick="app.viewFriendProfile('${friend.name}')">
+                    <button class="btn btn--secondary btn--sm" data-friend="${friend.name}">
                         👁️ Profil
                     </button>
                 </div>
@@ -667,26 +989,69 @@ class PickerlSammlerApp {
         `).join('');
     }
 
+    viewFriendProfile(friendName) {
+        console.log('Loading friend profile:', friendName);
+        const friend = this.data.friends.find(f => f.name === friendName);
+        if (!friend) {
+            this.showToast('Profil konnte nicht geladen werden');
+            return;
+        }
+
+        this.currentFriendProfile = friendName;
+        
+        // Update profile modal
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
+        const profileLevel = document.getElementById('profileLevel');
+        const profileXP = document.getElementById('profileXP');
+        const profileAchievements = document.getElementById('profileAchievements');
+        const profileCollections = document.getElementById('profileCollections');
+        const profileTradables = document.getElementById('profileTradables');
+        
+        if (profileAvatar) profileAvatar.textContent = friend.avatar;
+        if (profileName) profileName.textContent = friend.name;
+        if (profileLevel) profileLevel.textContent = friend.level;
+        if (profileXP) profileXP.textContent = friend.xp;
+        
+        if (profileAchievements) {
+            profileAchievements.innerHTML = friend.achievements.map(achievementName => {
+                const achievement = this.data.achievements.find(a => a.name === achievementName);
+                return `<div class="mini-achievement">${achievement?.icon || '🏆'} ${achievementName}</div>`;
+            }).join('');
+        }
+        
+        if (profileCollections) {
+            profileCollections.innerHTML = friend.collections.map(collection => {
+                const collectionData = this.data.sampleCollections.find(c => c.id === collection.id);
+                return `<div class="mini-collection">${collectionData?.name || 'Sammlung'} (${collection.progress}%)</div>`;
+            }).join('');
+        }
+        
+        if (profileTradables) {
+            profileTradables.innerHTML = friend.tradableStickers.map(tradable => {
+                const collectionData = this.data.sampleCollections.find(c => c.id === tradable.collectionId);
+                return `
+                    <div class="tradable-item">
+                        <span>${collectionData?.name || 'Sammlung'}</span>
+                        <div class="tradable-numbers">
+                            <span class="tradable-number">${tradable.stickerNumber} (${tradable.quantity}x)</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        const friendProfileModal = document.getElementById('friendProfileModal');
+        if (friendProfileModal) friendProfileModal.classList.remove('hidden');
+    }
+
     renderTradeSuggestions() {
-        console.log('Rendering trade suggestions');
+        console.log('Rendering enhanced trade suggestions');
         const container = document.getElementById('tradeSuggestions');
         if (!container) return;
         
-        // Generate example trade suggestions
-        const suggestions = [
-            {
-                friend: 'Anna',
-                give: [23, 45, 67],
-                get: [12, 34, 56],
-                collection: 'BILLA Wald Sammlung 2024'
-            },
-            {
-                friend: 'Max',
-                give: [89, 90],
-                get: [78, 79, 80],
-                collection: 'SPAR Oskar & Bo Abenteuer'
-            }
-        ];
+        // Generate intelligent trade suggestions based on duplicates
+        const suggestions = this.generateTradeSuggestions();
 
         container.innerHTML = `
             <h3>Empfohlene Tausche 🔄</h3>
@@ -694,10 +1059,10 @@ class PickerlSammlerApp {
                 ${suggestions.map(suggestion => `
                     <div class="trade-suggestion">
                         <div class="trade-header">
-                            <div class="friend-avatar">${this.data.friends.find(f => f.name === suggestion.friend)?.avatar || '👤'}</div>
+                            <div class="friend-avatar">${suggestion.friend.avatar || '👤'}</div>
                             <div>
-                                <h4>Tausch mit ${suggestion.friend}</h4>
-                                <p>${suggestion.collection}</p>
+                                <h4>Tausch mit ${suggestion.friend.name}</h4>
+                                <p>${suggestion.collectionName}</p>
                             </div>
                         </div>
                         <div class="trade-items">
@@ -715,13 +1080,112 @@ class PickerlSammlerApp {
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn--primary btn--full-width" onclick="app.proposeTrade('${suggestion.friend}')">
+                        <button class="btn btn--primary btn--full-width" data-friend="${suggestion.friend.name}">
                             Tausch vorschlagen
                         </button>
                     </div>
                 `).join('')}
             </div>
         `;
+    }
+
+    generateTradeSuggestions() {
+        const suggestions = [];
+        
+        // Find user's duplicates and friends' needs
+        Object.keys(this.user.collections).forEach(collectionId => {
+            const collection = this.data.sampleCollections.find(c => c.id === collectionId);
+            const userCollection = this.user.collections[collectionId];
+            
+            // Find user's duplicates
+            const userDuplicates = Object.entries(userCollection.collected || {})
+                .filter(([num, count]) => count >= 2)
+                .map(([num]) => parseInt(num));
+            
+            if (userDuplicates.length === 0) return;
+            
+            // Check each friend
+            this.data.friends.forEach(friend => {
+                const friendCollection = friend.collections.find(c => c.id === collectionId);
+                if (!friendCollection) return;
+                
+                const friendTradables = friend.tradableStickers
+                    .filter(t => t.collectionId === collectionId)
+                    .map(t => t.stickerNumber);
+                
+                if (friendTradables.length === 0) return;
+                
+                // Create suggestion
+                suggestions.push({
+                    friend: friend,
+                    collectionName: collection.name,
+                    give: userDuplicates.slice(0, 3),
+                    get: friendTradables.slice(0, 3)
+                });
+            });
+        });
+        
+        return suggestions.slice(0, 4); // Limit to 4 suggestions
+    }
+
+    renderSettings() {
+        console.log('Rendering settings page');
+        
+        // Update avatar selector
+        setTimeout(() => {
+            const avatarSelector = document.getElementById('avatarSelector');
+            if (avatarSelector) {
+                avatarSelector.querySelectorAll('.avatar-option').forEach(option => {
+                    option.classList.toggle('selected', option.dataset.avatar === this.user.avatar);
+                });
+            }
+            
+            // Update form fields
+            const settingsName = document.getElementById('settingsName');
+            const soundToggle = document.getElementById('soundToggle');
+            const notificationToggle = document.getElementById('notificationToggle');
+            const themeSelect = document.getElementById('themeSelect');
+            
+            if (settingsName) settingsName.value = this.user.name;
+            if (soundToggle) soundToggle.checked = this.settings.soundEffects;
+            if (notificationToggle) notificationToggle.checked = this.settings.notifications;
+            if (themeSelect) themeSelect.value = this.settings.theme;
+        }, 100);
+    }
+
+    saveProfileSettings() {
+        const settingsName = document.getElementById('settingsName');
+        const selectedAvatar = document.querySelector('#avatarSelector .avatar-option.selected');
+        
+        if (settingsName?.value.trim()) {
+            this.user.name = settingsName.value.trim();
+        }
+        
+        if (selectedAvatar) {
+            this.user.avatar = selectedAvatar.dataset.avatar;
+        }
+        
+        this.saveUserData();
+        this.updateUI();
+        this.showToast('Profil gespeichert! ✨');
+    }
+
+    resetAllData() {
+        localStorage.removeItem('pickerl-sammler-user');
+        localStorage.removeItem('pickerl-sammler-settings');
+        location.reload();
+    }
+
+    showConfirmation(title, message, action) {
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmModal = document.getElementById('confirmationModal');
+        
+        if (confirmTitle) confirmTitle.textContent = title;
+        if (confirmMessage) confirmMessage.textContent = message;
+        if (confirmModal) confirmModal.classList.remove('hidden');
+        
+        this.pendingConfirmAction = action;
     }
 
     addXP(amount) {
@@ -754,13 +1218,14 @@ class PickerlSammlerApp {
     checkCollectionProgress() {
         const collection = this.data.sampleCollections.find(c => c.id === this.currentCollection);
         const userCollection = this.user.collections[this.currentCollection];
-        const collected = Object.keys(userCollection.collected || {}).length;
+        const collectedCount = Object.keys(userCollection.collected || {}).length;
+        const totalStickers = Object.values(userCollection.collected || {}).reduce((sum, count) => sum + count, 0);
 
-        if (collected === 50) {
+        if (totalStickers >= 50) {
             this.checkAchievement('Fleißiger Sammler');
         }
         
-        if (collected === collection.totalStickers) {
+        if (collectedCount === collection.totalStickers) {
             this.checkAchievement('Komplettierungs-King');
             this.createConfetti();
         }
@@ -782,7 +1247,7 @@ class PickerlSammlerApp {
     }
 
     createConfetti() {
-        const colors = ['#218085', '#50b8c6', '#ff5459', '#e6815f'];
+        const colors = ['#1FB8CD', '#FFC185', '#B4413C', '#ECEBD5', '#5D878F'];
         for (let i = 0; i < 30; i++) {
             setTimeout(() => {
                 const confetti = document.createElement('div');
@@ -811,6 +1276,7 @@ class PickerlSammlerApp {
             animation: slideIn 0.3s ease-out;
             max-width: 300px;
             box-shadow: var(--shadow-lg);
+            font-weight: var(--font-weight-medium);
         `;
         toast.textContent = message;
         document.body.appendChild(toast);
@@ -824,10 +1290,10 @@ class PickerlSammlerApp {
     shareProgress() {
         const collection = this.data.sampleCollections.find(c => c.id === this.currentCollection);
         const userCollection = this.user.collections[this.currentCollection];
-        const collected = Object.keys(userCollection?.collected || {}).length;
-        const progress = Math.round((collected / collection.totalStickers) * 100);
+        const collectedCount = Object.keys(userCollection?.collected || {}).length;
+        const progress = Math.round((collectedCount / collection.totalStickers) * 100);
 
-        const message = `🎉 Ich sammle gerade "${collection.name}" und habe schon ${collected}/${collection.totalStickers} Pickerl (${progress}%)! 📚✨`;
+        const message = `🎉 Ich sammle gerade "${collection.name}" und habe schon ${collectedCount}/${collection.totalStickers} Pickerl (${progress}%)! 📚✨`;
 
         if (navigator.share) {
             navigator.share({
@@ -869,10 +1335,6 @@ class PickerlSammlerApp {
         }
         this.saveUserData();
         this.updateStats();
-    }
-
-    viewFriendProfile(friendName) {
-        this.showToast(`Profil von ${friendName} wird geladen... 👤`);
     }
 
     addBulkStickers() {
@@ -957,21 +1419,7 @@ function shareAchievement() {
 // Initialize app
 let app;
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app...');
+    console.log('DOM loaded, initializing app with bug fixes...');
     app = new PickerlSammlerApp();
     app.init();
 });
-
-// Add styles for animations
-const styles = document.createElement('style');
-styles.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(styles);
