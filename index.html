@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickerl-Sammler - Deine magische Sammlung</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#218085">
+</head>
+<body>
+    <!-- Onboarding Modal -->
+    <div id="onboardingModal" class="modal">
+        <div class="modal-content">
+            <h2>Willkommen bei Pickerl-Sammler! 🌟</h2>
+            <p>Erstelle dein Sammler-Profil und beginne dein Abenteuer!</p>
+            
+            <div class="avatar-selection">
+                <h3>Wähle deinen Avatar:</h3>
+                <div class="avatar-grid">
+                    <div class="avatar-option" data-avatar="🦊">🦊</div>
+                    <div class="avatar-option" data-avatar="🐻">🐻</div>
+                    <div class="avatar-option" data-avatar="🦁">🦁</div>
+                    <div class="avatar-option" data-avatar="🐨">🐨</div>
+                    <div class="avatar-option" data-avatar="🐼">🐼</div>
+                    <div class="avatar-option" data-avatar="🦝">🦝</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="playerName" class="form-label">Dein Name:</label>
+                <input type="text" id="playerName" class="form-control" placeholder="Wie heißt du?" maxlength="20">
+            </div>
+            
+            <button id="startAdventure" class="btn btn--primary btn--lg btn--full-width">
+                Abenteuer starten! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app-container hidden">
+        <!-- Navigation Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="user-info">
+                    <div class="avatar-display">
+                        <span id="userAvatar">🦊</span>
+                    </div>
+                    <div class="user-details">
+                        <h3 id="userName">Sammler</h3>
+                        <div class="level-info">
+                            <span class="level-badge">Level <span id="userLevel">1</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="settingsBtn" class="btn btn--secondary btn--sm">⚙️</button>
+                    <button id="friendsBtn" class="btn btn--secondary btn--sm">👥</button>
+                </div>
+            </div>
+            
+            <!-- XP Progress Bar -->
+            <div class="xp-container">
+                <div class="xp-bar">
+                    <div id="xpProgress" class="xp-fill"></div>
+                </div>
+                <div class="xp-text">
+                    <span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="dashboardView" class="view active">
+                <div class="welcome-section">
+                    <h2>Hallo <span id="welcomeName">Sammler</span>! 👋</h2>
+                    <p>Bereit für dein nächstes Sammler-Abenteuer?</p>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-value" id="totalStickers">0</div>
+                        <div class="stat-label">Gesammelte Pickerl</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔄</div>
+                        <div class="stat-value" id="totalTrades">0</div>
+                        <div class="stat-label">Tausche</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-value" id="achievementCount">0</div>
+                        <div class="stat-label">Achievements</div>
+                    </div>
+                </div>
+
+                <!-- Current Collections -->
+                <div class="section">
+                    <h3>Deine aktuellen Sammlungen</h3>
+                    <div id="activeCollections" class="collections-grid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Recent Achievements -->
+                <div class="section">
+                    <h3>Neue Erfolge 🏆</h3>
+                    <div id="recentAchievements" class="achievements-grid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button id="newCollectionBtn" class="btn btn--primary btn--lg">
+                        ➕ Neue Sammlung starten
+                    </button>
+                    <button id="tradeCenterBtn" class="btn btn--secondary btn--lg">
+                        🔄 Tausch-Center
+                    </button>
+                </div>
+            </section>
+
+            <!-- Collections View -->
+            <section id="collectionsView" class="view">
+                <div class="view-header">
+                    <button id="backToDashboard" class="btn btn--outline">← Zurück</button>
+                    <h2>Sammlung wählen</h2>
+                </div>
+                
+                <div id="availableCollections" class="collections-grid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Collection Detail View -->
+            <section id="collectionDetailView" class="view">
+                <div class="view-header">
+                    <button id="backToCollections" class="btn btn--outline">← Zurück</button>
+                    <h2 id="collectionTitle">Sammlung</h2>
+                    <button id="shareCollectionBtn" class="btn btn--primary btn--sm">📱 Teilen</button>
+                </div>
+
+                <!-- Collection Progress -->
+                <div class="collection-progress">
+                    <div class="progress-header">
+                        <h3>Fortschritt</h3>
+                        <span id="progressText">0 / 0 (0%)</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="collectionProgress" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Filter Options -->
+                <div class="filter-section">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">Alle</button>
+                        <button class="filter-btn" data-filter="collected">Gesammelt</button>
+                        <button class="filter-btn" data-filter="missing">Fehlend</button>
+                        <button class="filter-btn" data-filter="duplicates">Doppelt</button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="stickerSearch" placeholder="Nummer suchen..." class="form-control">
+                    </div>
+                </div>
+
+                <!-- Stickers Grid -->
+                <div class="stickers-section">
+                    <div id="stickersGrid" class="stickers-grid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Bulk Actions -->
+                <div class="bulk-actions">
+                    <button id="bulkModeBtn" class="btn btn--secondary">📝 Mehrere hinzufügen</button>
+                    <div id="bulkModePanel" class="bulk-panel hidden">
+                        <input type="text" id="bulkInput" placeholder="Nummern eingeben (z.B. 1,5,10-15)" class="form-control">
+                        <button id="addBulkStickers" class="btn btn--primary">Hinzufügen</button>
+                        <button id="cancelBulk" class="btn btn--outline">Abbrechen</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Friends View -->
+            <section id="friendsView" class="view">
+                <div class="view-header">
+                    <button id="backToDashboardFromFriends" class="btn btn--outline">← Zurück</button>
+                    <h2>Freunde</h2>
+                    <button id="inviteFriendBtn" class="btn btn--primary btn--sm">👥 Einladen</button>
+                </div>
+
+                <div class="friends-list" id="friendsList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Trade Center View -->
+            <section id="tradeCenterView" class="view">
+                <div class="view-header">
+                    <button id="backToDashboardFromTrade" class="btn btn--outline">← Zurück</button>
+                    <h2>Tausch-Center</h2>
+                </div>
+
+                <div class="trade-suggestions" id="tradeSuggestions">
+                    <h3>Empfohlene Tausche 🔄</h3>
+                    <div class="suggestions-grid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="dashboard">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Start</span>
+            </button>
+            <button class="nav-item" data-view="collections">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Sammlungen</span>
+            </button>
+            <button class="nav-item" data-view="tradeCenter">
+                <span class="nav-icon">🔄</span>
+                <span class="nav-label">Tauschen</span>
+            </button>
+            <button class="nav-item" data-view="friends">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Freunde</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <!-- Friend Invite Modal -->
+    <div id="inviteModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Freunde einladen 👥</h3>
+            <p>Teile diesen Code mit deinen Freunden:</p>
+            <div class="invite-code">
+                <div class="qr-code">📱</div>
+                <div class="invite-link">
+                    <input type="text" readonly value="https://pickerl-sammler.app/join/ABC123" class="form-control">
+                    <button class="btn btn--primary" onclick="navigator.share && navigator.share({title: 'Pickerl-Sammler', text: 'Sammle mit mir Pickerl!', url: 'https://pickerl-sammler.app/join/ABC123'})">
+                        📱 Über WhatsApp teilen
+                    </button>
+                </div>
+            </div>
+            <button class="modal-close btn btn--outline">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Achievement Modal -->
+    <div id="achievementModal" class="modal hidden">
+        <div class="modal-content achievement-celebration">
+            <div class="celebration-icon">🎉</div>
+            <h2>Glückwunsch!</h2>
+            <div class="achievement-icon" id="achievementIcon">🏆</div>
+            <h3 id="achievementName">Achievement</h3>
+            <p id="achievementDescription">Beschreibung</p>
+            <button class="btn btn--primary" onclick="shareAchievement()">📱 Erfolg teilen</button>
+            <button class="modal-close btn btn--outline">Weiter sammeln!</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
