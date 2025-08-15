@@ -10,37 +10,399 @@
     <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // Warten bis die Seite geladen ist
-  document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Supabase Konfiguration
     const SUPABASE_URL = 'https://lekplvtnvrswmrrnyrvt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3BsdnRudnJzd21ycm55cnZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTkzMDYsImV4cCI6MjA3MDgzNTMwNn0.TwHdIU6VQtJ0yd4wtURh1f4wlGzBM4r6ffJGyEpm1Jg';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3BsdnRudnJzd21ycm55cnZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTkzMDYsImV4cCI6MjA3MDgzNTMwNn0.TwHdIU6VQtJ0yd4wtURh1f4wlGzBM4r6ffJGyEpm1Jg'; // Dein echter Key hier
     
-    // Supabase Client global verfügbar machen
     window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
     console.log('Supabase erfolgreich initialisiert');
-    
-    // Test-Funktion global verfügbar machen
-    window.addTestUser = async function() {
-      try {
-        const { data, error } = await window.supabase
-          .from('users')
-          .insert([{ name: 'Max Mustermann', avatar: '🦁', level: 1, xp: 0 }]);
-        
-        if (error) {
-          console.error('Fehler:', error.message);
-          console.error('Details:', error);
-        } else {
-          console.log('Erfolg! User erstellt:', data);
-        }
-      } catch (err) {
-        console.error('Allgemeiner Fehler:', err);
-      }
-    }
-  });
-</script>
 
+    // ==============================================
+    // NUTZER-VERWALTUNG
+    // ==============================================
+    
+    // Nutzer erstellen oder laden
+    window.createOrLoadUser = async function(name, avatar) {
+        try {
+            // Erst prüfen ob User bereits existiert (basierend auf Namen)
+            const { data: existingUsers, error: searchError } = await window.supabase
+                .from('users')
+                .select('*')
+                .eq('name', name)
+                .limit(1);
+            
+            if (searchError) {
+                console.error('Fehler beim Suchen:', searchError);
+                return null;
+            }
+            
+            // Wenn User existiert, laden
+            if (existingUsers && existingUsers.length > 0) {
+                const user = existingUsers[0];
+                localStorage.setItem('currentUserId', user.id);
+                console.log('User gefunden und geladen:', user);
+                return user;
+            }
+            
+            // Wenn User nicht existiert, neu erstellen
+            const { data: newUser, error: createError } = await window.supabase
+                .from('users')
+                .insert([{ 
+                    name: name, 
+                    avatar: avatar, 
+                    level: 1, 
+                    xp: 0,
+                    last_active: new Date().toISOString()
+                }])
+                .select()
+                .single();
+            
+            if (createError) {
+                console.error('Fehler beim Erstellen:', createError);
+                return null;
+            }
+            
+            localStorage.setItem('currentUserId', newUser.id);
+            console.log('Neuer User erstellt:', newUser);
+            return newUser;
+            
+        } catch (err) {
+            console.error('Allgemeiner Fehler bei User-Erstellung:', err);
+            return null;
+        }
+    };
+    
+    // Aktuellen User laden
+    window.getCurrentUser = async function() {
+        const userId = localStorage.getItem('currentUserId');
+        if (!userId) return null;
+        
+        try {
+            const { data, error } = await window.supabase
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+            
+            if (error) {
+                console.error('Fehler beim Laden des Users:', error);
+                return null;
+            }
+            
+            return data;
+        } catch (err) {
+            console.error('Fehler beim User-Abruf:', err);
+            return null;
+        }
+    };
+    
+    // User-Daten aktualisieren (XP, Level, etc.)
+    window.updateUser = async function(updates) {
+        const userId = localStorage.getItem('currentUserId');
+        if (!userId) return false;
+        
+        try {
+            const { data, error } = await window.supabase
+                .from('users')
+                .update({
+                    ...updates,
+                    last_active: new Date().toISOString()
+                })
+                .eq('id', userId)
+                .select()
+                .single();
+            
+            if (error) {
+                console.error('Fehler beim User-Update:', error);
+                return false;
+            }
+            
+            console.log('User erfolgreich aktualisiert:', data);
+            return data;
+        } catch (err) {
+            console.error('Fehler beim User-Update:', err);
+            return false;
+        }
+    };
+
+    // ==============================================
+    // PICKERL-SAMMLUNGEN VERWALTEN
+    // ==============================================
+    
+    // Sammlung speichern
+    window.saveCollection = async function(collectionType, stickers, progress) {
+        const userId = localStorage.getItem('currentUserId');
+        if (!userId) {
+            console.error('Kein User angemeldet');
+            return false;
+        }
+        
+        try {
+            // Prüfen ob Sammlung bereits existiert
+            const { data: existing, error: searchError } = await window.supabase
+                .from('collections')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('collection_type', collectionType)
+                .limit(1);
+            
+            if (searchError) {
+                console.error('Fehler beim Suchen der Sammlung:', searchError);
+                return false;
+            }
+            
+            // Update oder Insert
+            if (existing && existing.length > 0) {
+                // Update bestehende Sammlung
+                const { data, error } = await window.supabase
+                    .from('collections')
+                    .update({
+                        stickers: stickers,
+                        progress: progress
+                    })
+                    .eq('id', existing[0].id)
+                    .select()
+                    .single();
+                
+                if (error) {
+                    console.error('Fehler beim Update der Sammlung:', error);
+                    return false;
+                }
+                
+                console.log('Sammlung aktualisiert:', data);
+                return data;
+            } else {
+                // Neue Sammlung erstellen
+                const { data, error } = await window.supabase
+                    .from('collections')
+                    .insert([{
+                        user_id: userId,
+                        collection_type: collectionType,
+                        stickers: stickers,
+                        progress: progress
+                    }])
+                    .select()
+                    .single();
+                
+                if (error) {
+                    console.error('Fehler beim Erstellen der Sammlung:', error);
+                    return false;
+                }
+                
+                console.log('Neue Sammlung erstellt:', data);
+                return data;
+            }
+        } catch (err) {
+            console.error('Allgemeiner Fehler beim Speichern:', err);
+            return false;
+        }
+    };
+    
+    // Sammlung laden
+    window.loadCollection = async function(collectionType) {
+        const userId = localStorage.getItem('currentUserId');
+        if (!userId) return null;
+        
+        try {
+            const { data, error } = await window.supabase
+                .from('collections')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('collection_type', collectionType)
+                .single();
+            
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    // Keine Daten gefunden - das ist ok
+                    console.log('Keine Sammlung gefunden für:', collectionType);
+                    return null;
+                }
+                console.error('Fehler beim Laden der Sammlung:', error);
+                return null;
+            }
+            
+            console.log('Sammlung geladen:', data);
+            return data;
+        } catch (err) {
+            console.error('Fehler beim Sammlung-Abruf:', err);
+            return null;
+        }
+    };
+    
+    // Alle Sammlungen eines Users laden
+    window.loadAllCollections = async function() {
+        const userId = localStorage.getItem('currentUserId');
+        if (!userId) return [];
+        
+        try {
+            const { data, error } = await window.supabase
+                .from('collections')
+                .select('*')
+                .eq('user_id', userId);
+            
+            if (error) {
+                console.error('Fehler beim Laden aller Sammlungen:', error);
+                return [];
+            }
+            
+            console.log('Alle Sammlungen geladen:', data);
+            return data || [];
+        } catch (err) {
+            console.error('Fehler beim Abruf aller Sammlungen:', err);
+            return [];
+        }
+    };
+
+    // ==============================================
+    // FREUNDE VERWALTEN
+    // ==============================================
+    
+    // Freund hinzufügen
+    window.addFriend = async function(friendName) {
+        const userId = localStorage.getItem('currentUserId');
+        if (!userId) return false;
+        
+        try {
+            // Erst Freund anhand des Namens finden
+            const { data: friendUser, error: friendError } = await window.supabase
+                .from('users')
+                .select('*')
+                .eq('name', friendName)
+                .single();
+            
+            if (friendError) {
+                console.error('Freund nicht gefunden:', friendError);
+                return false;
+            }
+            
+            // Prüfen ob Freundschaft bereits existiert
+            const { data: existing, error: existingError } = await window.supabase
+                .from('friends')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('friend_id', friendUser.id)
+                .limit(1);
+            
+            if (existing && existing.length > 0) {
+                console.log('Freundschaft existiert bereits');
+                return true;
+            }
+            
+            // Neue Freundschaft erstellen
+            const { data, error } = await window.supabase
+                .from('friends')
+                .insert([{
+                    user_id: userId,
+                    friend_id: friendUser.id,
+                    status: 'accepted' // Vereinfacht - direkt akzeptiert
+                }])
+                .select()
+                .single();
+            
+            if (error) {
+                console.error('Fehler beim Hinzufügen des Freunds:', error);
+                return false;
+            }
+            
+            console.log('Freund hinzugefügt:', data);
+            return true;
+        } catch (err) {
+            console.error('Fehler beim Freund hinzufügen:', err);
+            return false;
+        }
+    };
+    
+    // Freundesliste laden
+    window.loadFriends = async function() {
+        const userId = localStorage.getItem('currentUserId');
+        if (!userId) return [];
+        
+        try {
+            const { data, error } = await window.supabase
+                .from('friends')
+                .select(`
+                    *,
+                    friend_user:friend_id (
+                        id,
+                        name,
+                        avatar,
+                        level,
+                        xp
+                    )
+                `)
+                .eq('user_id', userId)
+                .eq('status', 'accepted');
+            
+            if (error) {
+                console.error('Fehler beim Laden der Freunde:', error);
+                return [];
+            }
+            
+            console.log('Freunde geladen:', data);
+            return data || [];
+        } catch (err) {
+            console.error('Fehler beim Freunde-Abruf:', err);
+            return [];
+        }
+    };
+
+    // ==============================================
+    // HILFS-FUNKTIONEN
+    // ==============================================
+    
+    // Alle User-Daten synchronisieren
+    window.syncUserData = async function() {
+        try {
+            const user = await getCurrentUser();
+            if (!user) return false;
+            
+            const collections = await loadAllCollections();
+            const friends = await loadFriends();
+            
+            // UI aktualisieren
+            if (window.updateUIWithUserData) {
+                window.updateUIWithUserData(user, collections, friends);
+            }
+            
+            console.log('User-Daten synchronisiert');
+            return true;
+        } catch (err) {
+            console.error('Fehler bei der Synchronisation:', err);
+            return false;
+        }
+    };
+    
+    // Test-Funktionen (für Console)
+    window.addTestUser = async function() {
+        return await createOrLoadUser('Max Mustermann', '🦁');
+    };
+    
+    window.testSaveCollection = async function() {
+        const testStickers = {
+            'sticker_1': { collected: true, date: new Date().toISOString() },
+            'sticker_2': { collected: false, date: null }
+        };
+        return await saveCollection('test-collection', testStickers, 50);
+    };
+    
+    window.testLoadCollection = async function() {
+        return await loadCollection('test-collection');
+    };
+    
+    console.log('🚀 Alle Supabase-Funktionen geladen!');
+    console.log('📝 Verfügbare Funktionen:');
+    console.log('   - createOrLoadUser(name, avatar)');
+    console.log('   - getCurrentUser()');
+    console.log('   - updateUser(updates)');
+    console.log('   - saveCollection(type, stickers, progress)');
+    console.log('   - loadCollection(type)');
+    console.log('   - loadAllCollections()');
+    console.log('   - addFriend(friendName)');
+    console.log('   - loadFriends()');
+    console.log('   - syncUserData()');
+});
+</script>
 </head>
 
 <body>
