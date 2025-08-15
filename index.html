@@ -8,22 +8,39 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#218085" />
     <!-- Supabase Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-      // Supabase Konfiguration
-      const SUPABASE_URL = 'https://lekplvtnvrswmrrnyrvt.supabase.co';
-      const SUPABASE_ANON_KEY = 'sb_publishable_LZ0huP0FuMn7DG_aWQ_sw_psc5oEBj';
-      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      // Beispiel: Einen User speichern
-      async function addTestUser() {
-        const { data, error } = await supabase
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Warten bis die Seite geladen ist
+  document.addEventListener('DOMContentLoaded', function() {
+    // Supabase Konfiguration
+    const SUPABASE_URL = 'https://lekplvtnvrswmrrnyrvt.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_LZ0huP0FuMn7DG_aWQ_sw_psc5oEBj';
+    
+    // Supabase Client global verfügbar machen
+    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    console.log('Supabase erfolgreich initialisiert');
+    
+    // Test-Funktion global verfügbar machen
+    window.addTestUser = async function() {
+      try {
+        const { data, error } = await window.supabase
           .from('users')
           .insert([{ name: 'Max Mustermann', avatar: '🦁', level: 1, xp: 0 }]);
-        if (error) console.error('Fehler:', error.message);
-        else console.log('Erfolg:', data);
+        
+        if (error) {
+          console.error('Fehler:', error.message);
+          console.error('Details:', error);
+        } else {
+          console.log('Erfolg! User erstellt:', data);
+        }
+      } catch (err) {
+        console.error('Allgemeiner Fehler:', err);
       }
-    </script>
+    }
+  });
+</script>
+
 </head>
 
 <body>
