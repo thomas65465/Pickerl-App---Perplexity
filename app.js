@@ -1,5 +1,5 @@
 // ==============================================
-// ANGEPASSTE APP.JS - SUPABASE INTEGRATION
+// PICKERL-SAMMLER APP - SUPABASE INTEGRATION
 // ==============================================
 
 class PickerlSammlerApp {
@@ -79,17 +79,60 @@ class PickerlSammlerApp {
             option.addEventListener('click', (e) => this.selectAvatar(e.target.dataset.avatar));
         });
         
-        // Sticker sammeln
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('sticker-item') && !e.target.classList.contains('collected')) {
-                this.collectSticker(e.target);
-            }
+        // Navigation Buttons
+        const newCollectionBtn = document.getElementById('newCollectionBtn');
+        const tradeCenterBtn = document.getElementById('tradeCenterBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const friendsBtn = document.getElementById('friendsBtn');
+        
+        if (newCollectionBtn) {
+            newCollectionBtn.addEventListener('click', () => this.showCollectionsView());
+        }
+        if (tradeCenterBtn) {
+            tradeCenterBtn.addEventListener('click', () => this.showTradeCenterView());
+        }
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => this.showSettingsView());
+        }
+        if (friendsBtn) {
+            friendsBtn.addEventListener('click', () => this.showFriendsView());
+        }
+        
+        // Back Buttons
+        const backToDashboard = document.getElementById('backToDashboard');
+        const backToCollections = document.getElementById('backToCollections');
+        const backToDashboardFromFriends = document.getElementById('backToDashboardFromFriends');
+        const backToDashboardFromTrade = document.getElementById('backToDashboardFromTrade');
+        const backToDashboardFromSettings = document.getElementById('backToDashboardFromSettings');
+        
+        if (backToDashboard) {
+            backToDashboard.addEventListener('click', () => this.showDashboardView());
+        }
+        if (backToCollections) {
+            backToCollections.addEventListener('click', () => this.showCollectionsView());
+        }
+        if (backToDashboardFromFriends) {
+            backToDashboardFromFriends.addEventListener('click', () => this.showDashboardView());
+        }
+        if (backToDashboardFromTrade) {
+            backToDashboardFromTrade.addEventListener('click', () => this.showDashboardView());
+        }
+        if (backToDashboardFromSettings) {
+            backToDashboardFromSettings.addEventListener('click', () => this.showDashboardView());
+        }
+        
+        // Bottom Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.view;
+                this.switchView(view);
+            });
         });
         
-        // Freund hinzufügen (falls Button existiert)
-        const addFriendBtn = document.getElementById('addFriendBtn');
-        if (addFriendBtn) {
-            addFriendBtn.addEventListener('click', () => this.showAddFriendDialog());
+        // Profile Settings
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        if (saveProfileBtn) {
+            saveProfileBtn.addEventListener('click', () => this.saveProfileSettings());
         }
         
         console.log('Event Listeners eingerichtet');
@@ -129,119 +172,101 @@ class PickerlSammlerApp {
         });
         
         // Gewählten Avatar markieren
-        document.querySelector(`[data-avatar="${avatar}"]`).classList.add('selected');
+        document.querySelector(`[data-avatar="${avatar}"]`)?.classList.add('selected');
     }
     
-    async collectSticker(stickerElement) {
-        if (!this.currentUser) {
-            alert('Bitte melde dich erst an!');
-            return;
+    async saveProfileSettings() {
+        if (!this.currentUser) return;
+        
+        const nameInput = document.getElementById('settingsName');
+        const selectedAvatar = document.querySelector('#avatarSelector .avatar-option.selected');
+        
+        const updates = {};
+        
+        if (nameInput?.value && nameInput.value !== this.currentUser.name) {
+            updates.name = nameInput.value.trim();
         }
         
-        const stickerId = stickerElement.dataset.stickerId;
-        const collectionType = stickerElement.dataset.collection || 'default';
-        
-        // Animation hinzufügen
-        stickerElement.classList.add('collecting');
-        
-        // Sticker in lokalen Daten markieren
-        if (!this.userCollections[collectionType]) {
-            this.userCollections[collectionType] = {};
+        if (selectedAvatar && selectedAvatar.dataset.avatar !== this.currentUser.avatar) {
+            updates.avatar = selectedAvatar.dataset.avatar;
         }
         
-        this.userCollections[collectionType][stickerId] = {
-            collected: true,
-            date: new Date().toISOString()
-        };
-        
-        // Fortschritt berechnen
-        const progress = this.calculateProgress(collectionType);
-        
-        // In Supabase speichern
-        const saved = await saveCollection(
-            collectionType, 
-            this.userCollections[collectionType], 
-            progress
-        );
-        
-        if (saved) {
-            // XP berechnen und User updaten
-            const xpGain = 10; // 10 XP pro Sticker
-            const newXP = this.currentUser.xp + xpGain;
-            const newLevel = Math.floor(newXP / 100) + 1;
-            
-            this.currentUser = await updateUser({
-                xp: newXP,
-                level: newLevel
-            });
-            
-            // UI aktualisieren
-            stickerElement.classList.remove('collecting');
-            stickerElement.classList.add('collected');
-            
-            this.updateUI();
-            this.showStickerCollectedFeedback(xpGain);
-            
-            console.log('Sticker gesammelt:', stickerId, 'XP:', xpGain);
-        } else {
-            // Fehler beim Speichern
-            stickerElement.classList.remove('collecting');
-            alert('Fehler beim Speichern. Bitte versuche es erneut.');
-            
-            // Lokale Änderung rückgängig machen
-            delete this.userCollections[collectionType][stickerId];
+        if (Object.keys(updates).length > 0) {
+            const updatedUser = await updateUser(updates);
+            if (updatedUser) {
+                this.currentUser = updatedUser;
+                this.updateUI();
+                alert('Profil erfolgreich gespeichert!');
+            } else {
+                alert('Fehler beim Speichern des Profils.');
+            }
         }
     }
     
-    calculateProgress(collectionType) {
-        const collection = this.userCollections[collectionType];
-        if (!collection) return 0;
-        
-        const collected = Object.values(collection).filter(sticker => sticker.collected).length;
-        const total = Object.keys(collection).length;
-        
-        return total > 0 ? Math.round((collected / total) * 100) : 0;
-    }
-    
-    async addFriend(friendName) {
-        if (!this.currentUser) return false;
-        
-        const success = await addFriend(friendName);
-        
-        if (success) {
-            // Freundesliste neu laden
-            this.friends = await loadFriends();
-            this.updateFriendsUI();
-            return true;
+    // View Switching
+    switchView(viewName) {
+        switch(viewName) {
+            case 'dashboard':
+                this.showDashboardView();
+                break;
+            case 'collections':
+                this.showCollectionsView();
+                break;
+            case 'tradeCenter':
+                this.showTradeCenterView();
+                break;
+            case 'friends':
+                this.showFriendsView();
+                break;
         }
-        
-        return false;
     }
     
-    showStickerCollectedFeedback(xpGain) {
-        // Einfaches Feedback (kann später verschönert werden)
-        const feedback = document.createElement('div');
-        feedback.className = 'xp-feedback';
-        feedback.textContent = `+${xpGain} XP!`;
-        feedback.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            z-index: 1000;
-            animation: fadeInOut 2s ease-in-out;
-        `;
+    showDashboardView() {
+        this.hideAllViews();
+        document.getElementById('dashboardView')?.classList.add('active');
+        this.updateActiveNavItem('dashboard');
+    }
+    
+    showCollectionsView() {
+        this.hideAllViews();
+        document.getElementById('collectionsView')?.classList.add('active');
+        this.updateActiveNavItem('collections');
+    }
+    
+    showTradeCenterView() {
+        this.hideAllViews();
+        document.getElementById('tradeCenterView')?.classList.add('active');
+        this.updateActiveNavItem('tradeCenter');
+    }
+    
+    showFriendsView() {
+        this.hideAllViews();
+        document.getElementById('friendsView')?.classList.add('active');
+        this.updateActiveNavItem('friends');
+    }
+    
+    showSettingsView() {
+        this.hideAllViews();
+        document.getElementById('settingsView')?.classList.add('active');
+        // Settings in aktuellen Name und Avatar laden
+        const nameInput = document.getElementById('settingsName');
+        if (nameInput && this.currentUser) {
+            nameInput.value = this.currentUser.name;
+        }
+    }
+    
+    hideAllViews() {
+        document.querySelectorAll('.view').forEach(view => {
+            view.classList.remove('active');
+        });
+    }
+    
+    updateActiveNavItem(activeView) {
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
         
-        document.body.appendChild(feedback);
-        
-        setTimeout(() => {
-            document.body.removeChild(feedback);
-        }, 2000);
+        document.querySelector(`[data-view="${activeView}"]`)?.classList.add('active');
     }
     
     updateUI() {
@@ -294,19 +319,29 @@ class PickerlSammlerApp {
     }
     
     updateCollectionsUI() {
-        // Sammlungs-UI aktualisieren (abhängig von deinem HTML-Aufbau)
-        Object.keys(this.userCollections).forEach(collectionType => {
-            const progress = this.calculateProgress(collectionType);
-            const progressBar = document.querySelector(`[data-collection="${collectionType}"] .progress-bar`);
+        // Collections UI aktualisieren
+        const activeCollections = document.getElementById('activeCollections');
+        if (activeCollections) {
+            activeCollections.innerHTML = '';
             
-            if (progressBar) {
-                progressBar.style.width = `${progress}%`;
-            }
-        });
+            Object.keys(this.userCollections).forEach(collectionType => {
+                const progress = this.calculateProgress(collectionType);
+                const collectionCard = document.createElement('div');
+                collectionCard.className = 'collection-card';
+                collectionCard.innerHTML = `
+                    <h4>${collectionType}</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <p>${progress}% abgeschlossen</p>
+                `;
+                activeCollections.appendChild(collectionCard);
+            });
+        }
     }
     
     updateFriendsUI() {
-        // Freunde-UI aktualisieren (falls vorhanden)
+        // Freunde UI aktualisieren
         const friendsList = document.getElementById('friendsList');
         if (!friendsList) return;
         
@@ -328,6 +363,16 @@ class PickerlSammlerApp {
         });
     }
     
+    calculateProgress(collectionType) {
+        const collection = this.userCollections[collectionType];
+        if (!collection) return 0;
+        
+        const collected = Object.values(collection).filter(sticker => sticker.collected).length;
+        const total = Object.keys(collection).length;
+        
+        return total > 0 ? Math.round((collected / total) * 100) : 0;
+    }
+    
     showOnboardingModal() {
         const modal = document.getElementById('onboardingModal');
         const app = document.getElementById('app');
@@ -343,19 +388,6 @@ class PickerlSammlerApp {
         if (modal) modal.style.display = 'none';
         if (app) app.classList.remove('hidden');
     }
-    
-    showAddFriendDialog() {
-        const friendName = prompt('Gib den Namen deines Freundes ein:');
-        if (friendName) {
-            this.addFriend(friendName.trim()).then(success => {
-                if (success) {
-                    alert('Freund erfolgreich hinzugefügt!');
-                } else {
-                    alert('Freund konnte nicht hinzugefügt werden. Überprüfe den Namen.');
-                }
-            });
-        }
-    }
 }
 
 // App starten
@@ -365,16 +397,24 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         app = new PickerlSammlerApp();
         window.app = app; // Für Console-Zugriff
+        console.log('✅ Pickerl-Sammler App gestartet!');
     }, 500);
 });
 
-// CSS für XP-Feedback Animation
+// CSS für bessere Interaktionen
 const style = document.createElement('style');
 style.textContent = `
-    @keyframes fadeInOut {
-        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-        50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    .avatar-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 8px;
+    }
+    
+    .avatar-option:hover {
+        background-color: #f0f0f0;
+        transform: scale(1.05);
     }
     
     .avatar-option.selected {
@@ -383,19 +423,53 @@ style.textContent = `
         transform: scale(1.1);
     }
     
-    .sticker-item.collecting {
-        animation: pulse 0.5s ease-in-out;
+    .collection-card {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    .sticker-item.collected {
-        opacity: 0.6;
-        filter: grayscale(0.5);
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 8px 0;
     }
     
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
+    .progress-fill {
+        height: 100%;
+        background-color: #33808a;
+        transition: width 0.3s ease;
+    }
+    
+    .friend-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .friend-avatar {
+        font-size: 32px;
+        margin-right: 12px;
+    }
+    
+    .friend-info {
+        flex: 1;
+    }
+    
+    .friend-name {
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    
+    .friend-level {
+        color: #666;
+        font-size: 14px;
     }
 `;
 document.head.appendChild(style);
